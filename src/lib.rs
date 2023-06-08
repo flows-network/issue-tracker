@@ -88,7 +88,7 @@ impl App {
             .collect::<Vec<String>>()
             .join(", ");
 
-        if labelled.is_empty() {
+        if !labelled.is_empty() {
             match iep.action {
                 IssuesEventAction::Closed => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
