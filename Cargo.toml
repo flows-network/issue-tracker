@@ -1,0 +1,17 @@
+[package]
+name = "issue-tracker"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+discord-flows = "0.4.0"
+flowsnet-platform-sdk = "0.1.4"
+github-flows = "0.5.1"
+log = "0.4.18"
+serde_json = "1.0.96"
+store-flows = "0.3.1"
+tokio_wasi = { version = "1.25", features = ["macros", "rt"] }
