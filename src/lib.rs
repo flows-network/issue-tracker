@@ -79,32 +79,10 @@ impl App {
 
         if labeled_in_x != 0 {
             match iep.action {
-                // IssuesEventAction::Opened => {
-                //     let Some(content) = iep.issue.body else {
-                //         log::warn!("issue `{}` has no body", iep.issue.title);
-                //         return;
-                //     };
-                //     let mid = self.send_msg(self.channel_id, content).await.unwrap();
-                //
-                //     store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
-                //
-                //     let title = format!("{}#{}", iep.issue.title, iep.issue.number);
-                //     let cid = self.start_thread(mid, title).await.unwrap();
-                //
-                //     store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
-                //
-                //     self.join_thread(cid).await;
-                //
-                //     log::debug!(
-                //         "Opened action done, stored message_id: {}, channel_id: {}",
-                //         mid,
-                //         cid
-                //     );
-                // }
                 IssuesEventAction::Closed => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
                     if let Some(cid) = thread_channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let title = iep.issue.title;
                         let name = format!("{}(closed)", title);
@@ -119,7 +97,7 @@ impl App {
                 IssuesEventAction::Reopened => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
                     if let Some(cid) = thread_channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let title = iep.issue.title;
 
@@ -131,8 +109,8 @@ impl App {
                     let channel_id = store::get(&format!("{}:channel", issue_id));
                     let message_id = store::get(&format!("{}:message", issue_id));
                     if let (Some(cid), Some(mid)) = (channel_id, message_id) {
-                        let cid = cid.as_u64().unwrap();
-                        let mid = mid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
+                        let mid = mid.as_str().unwrap().parse().unwrap();
 
                         let title = iep.issue.title;
 
@@ -147,7 +125,7 @@ impl App {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
 
                     if let Some(cid) = channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let assignee = iep.assignee.unwrap().login;
                         self.send_msg(cid, format!("Assigned: {}", assignee)).await;
@@ -157,7 +135,7 @@ impl App {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
 
                     if let Some(cid) = channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let assignee = iep.assignee.unwrap().login;
                         self.send_msg(cid, format!("Unassigned: {}", assignee))
@@ -172,7 +150,7 @@ impl App {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
 
                     if let Some(cid) = channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let label = iep.label.unwrap().name;
                         self.send_msg(cid, format!("Labeled: {}", label)).await;
@@ -185,12 +163,12 @@ impl App {
                         };
                         let mid = self.send_msg(self.channel_id, content).await;
 
-                        store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
+                        store::set(&format!("{}:message", iep.issue.id), mid.to_string().into(), None);
 
                         let title = format!("{}#{}", iep.issue.title, iep.issue.number);
                         let cid = self.start_thread(mid, title).await.unwrap();
 
-                        store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
+                        store::set(&format!("{}:channel", iep.issue.id), cid.to_string().into(), None);
 
                         self.join_thread(cid).await;
 
@@ -205,7 +183,7 @@ impl App {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
 
                     if let Some(cid) = channel_id {
-                        let cid = cid.as_u64().unwrap();
+                        let cid = cid.as_str().unwrap().parse().unwrap();
 
                         let label = iep.label.unwrap().name;
                         self.send_msg(cid, format!("Unlabeled: {}", label)).await;
@@ -315,13 +293,17 @@ impl App {
                 let issue_id = icep.issue.id;
                 let channel_id = store::get(&format!("{}:channel", issue_id));
                 if let Some(cid) = channel_id {
-                    let cid = cid.as_u64().unwrap();
+                    let cid = cid.as_str().unwrap().parse().unwrap();
 
                     let title = icep.comment.body.unwrap_or("...".to_string());
 
                     let mid = self.send_msg(cid, title).await;
 
-                    store::set(&format!("{}:cmt_msg", icep.comment.id), mid.into(), None);
+                    store::set(
+                        &format!("{}:cmt_msg", icep.comment.id),
+                        mid.to_string().into(),
+                        None,
+                    );
 
                     log::debug!("stored comment_message_id: {}", mid);
                 } else {
@@ -335,8 +317,8 @@ impl App {
                 let channel_id = store::get(&format!("{}:channel", issue_id));
                 let cmt_msg_id = store::get(&format!("{}:cmt_msg", issue_id));
                 if let (Some(cid), Some(mid)) = (channel_id, cmt_msg_id) {
-                    let cid = cid.as_u64().unwrap();
-                    let mid = mid.as_u64().unwrap();
+                    let cid = cid.as_str().unwrap().parse().unwrap();
+                    let mid = mid.as_str().unwrap().parse().unwrap();
 
                     self.del_msg(cid, mid).await;
                 } else {
@@ -350,8 +332,8 @@ impl App {
                 let channel_id = store::get(&format!("{}:channel", issue_id));
                 let cmt_msg_id = store::get(&format!("{}:cmt_msg", issue_id));
                 if let (Some(cid), Some(mid)) = (channel_id, cmt_msg_id) {
-                    let cid = cid.as_u64().unwrap();
-                    let mid = mid.as_u64().unwrap();
+                    let cid = cid.as_str().unwrap().parse().unwrap();
+                    let mid = mid.as_str().unwrap().parse().unwrap();
 
                     let body = icep.comment.body.unwrap_or("...".to_string());
 
