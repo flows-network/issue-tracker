@@ -163,12 +163,20 @@ impl App {
                         };
                         let mid = self.send_msg(self.channel_id, content).await;
 
-                        store::set(&format!("{}:message", iep.issue.id), mid.to_string().into(), None);
+                        store::set(
+                            &format!("{}:message", iep.issue.id),
+                            mid.to_string().into(),
+                            None,
+                        );
 
                         let title = format!("{}#{}", iep.issue.title, iep.issue.number);
                         let cid = self.start_thread(mid, title).await.unwrap();
 
-                        store::set(&format!("{}:channel", iep.issue.id), cid.to_string().into(), None);
+                        store::set(
+                            &format!("{}:channel", iep.issue.id),
+                            cid.to_string().into(),
+                            None,
+                        );
 
                         self.join_thread(cid).await;
 
@@ -295,12 +303,17 @@ impl App {
                 if let Some(cid) = channel_id {
                     let cid = cid.as_str().unwrap().parse().unwrap();
 
-                    let title = icep.comment.body.unwrap_or("...".to_string());
+                    let comment = icep.comment;
+                    let author = comment.user.login;
+                    let body = comment.body.unwrap_or("...".to_string());
+                    let url = comment.url;
 
-                    let mid = self.send_msg(cid, title).await;
+                    let content = format!("{author}:\n{body}\n\n> {url}");
+
+                    let mid = self.send_msg(cid, content).await;
 
                     store::set(
-                        &format!("{}:cmt_msg", icep.comment.id),
+                        &format!("{}:cmt_msg", comment.id),
                         mid.to_string().into(),
                         None,
                     );
