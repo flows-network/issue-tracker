@@ -43,6 +43,8 @@ pub async fn run() {
         channel_id,
     };
 
+    log::info!("Running flow");
+
     listen_to_event(&gh_login, &owner, &repo, events, |payload| {
         handle(payload, state)
     })
@@ -90,6 +92,12 @@ impl App {
                     let cid = self.start_thread(mid, title).await.unwrap();
 
                     store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
+
+                    log::debug!(
+                        "Opened action done, stored message_id: {}, channel_id: {}",
+                        mid,
+                        cid
+                    );
                 }
                 IssuesEventAction::Closed => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -100,7 +108,11 @@ impl App {
                         let name = format!("{}(closed)", title);
 
                         self.edit_thread(name, cid).await;
+                    } else {
+                        log::warn!("failed to get channel_id");
                     }
+
+                    log::debug!("Closed action done");
                 }
                 IssuesEventAction::Reopened => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -123,7 +135,11 @@ impl App {
                         let title = iep.issue.title;
 
                         self.edit_msg(cid, mid, title).await;
+                    } else {
+                        log::warn!("failed to get channel_id and message_id");
                     }
+
+                    log::debug!("Edited action done");
                 }
                 IssuesEventAction::Assigned => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -144,7 +160,11 @@ impl App {
                         let assignee = iep.assignee.unwrap().login;
                         self.send_msg(cid, format!("Unassigned: {}", assignee))
                             .await;
+                    } else {
+                        log::warn!("failed to get channel_id");
                     }
+
+                    log::debug!("Unassigned action done");
                 }
                 IssuesEventAction::Labeled => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -154,7 +174,11 @@ impl App {
 
                         let label = iep.label.unwrap().name;
                         self.send_msg(cid, format!("Labeled: {}", label)).await;
+                    } else {
+                        log::warn!("failed to get channel_id");
                     }
+
+                    log::debug!("Labeled action done");
                 }
                 IssuesEventAction::Unlabeled => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -164,7 +188,11 @@ impl App {
 
                         let label = iep.label.unwrap().name;
                         self.send_msg(cid, format!("Unlabeled: {}", label)).await;
+                    } else {
+                        log::warn!("failed to get channel_id");
                     }
+
+                    log::debug!("Unlabeled action done");
                 }
                 action => {
                     log::info!("uncovered issue action: {:?}", action)
@@ -191,7 +219,10 @@ impl App {
             .await;
 
         match res {
-            Ok(msg) => Some(msg.id.0),
+            Ok(msg) => {
+                log::debug!("Sended message {} to {}", content, channel_id);
+                Some(msg.id.0)
+            }
             Err(e) => {
                 log::warn!("failed to send message: {}", e);
                 None
@@ -208,7 +239,10 @@ impl App {
             .await;
 
         match res {
-            Ok(gc) => Some(gc.id.0),
+            Ok(gc) => {
+                log::debug!("Started thread: {}({})", gc.name, gc.id);
+                Some(gc.id.0)
+            }
             Err(e) => {
                 log::warn!("failed to creat public thread: {}", e);
                 None
@@ -257,7 +291,10 @@ impl App {
                     let title = icep.comment.body.unwrap_or("...".to_string());
 
                     self.send_msg(cid, title).await;
+                } else {
+                    log::warn!("failed to get channel_id");
                 }
+                log::debug!("comment Created action done");
             }
             IssueCommentEventAction::Deleted => {
                 let issue_id = icep.issue.id;
@@ -268,7 +305,10 @@ impl App {
                     let mid = mid.as_u64().unwrap();
 
                     self.del_msg(cid, mid).await;
+                } else {
+                    log::warn!("failed to get channel_id and message_id");
                 }
+                log::debug!("comment Deleted action done");
             }
             IssueCommentEventAction::Edited => {
                 let issue_id = icep.issue.id;
@@ -281,7 +321,10 @@ impl App {
                     let body = icep.comment.body.unwrap_or("...".to_string());
 
                     self.edit_msg(cid, mid, body).await;
+                } else {
+                    log::warn!("failed to get channel_id and message_id");
                 }
+                log::debug!("comment Edited action done");
             }
             action => {
                 log::info!("uncovered action: {:?}", action)
