@@ -176,28 +176,30 @@ impl App {
                         );
                         let mid = self.send_msg(self.channel_id, content).await;
 
-                        store::set(
-                            &format!("{}:message", iep.issue.id),
-                            mid.to_string().into(),
-                            None,
-                        );
-
                         let title = format!("{}#{}", iep.issue.title, iep.issue.number);
                         let cid = self.start_thread(mid, title).await.unwrap();
 
-                        store::set(
-                            &format!("{}:channel", iep.issue.id),
-                            cid.to_string().into(),
-                            None,
-                        );
+                        if self.join_thread(cid).await {
+                            let Some(body) = iep.issue.body else {
+                                log::warn!("issue `{}` has no body", iep.issue.title);
+                                return;
+                            };
+                            self.send_msg(cid, body).await;
+                        }
 
-                        self.join_thread(cid).await;
+                        {
+                            store::set(
+                                &format!("{}:message", iep.issue.id),
+                                mid.to_string().into(),
+                                None,
+                            );
 
-                        let Some(body) = iep.issue.body else {
-                            log::warn!("issue `{}` has no body", iep.issue.title);
-                            return;
-                        };
-                        self.send_msg(cid, body).await;
+                            store::set(
+                                &format!("{}:channel", iep.issue.id),
+                                cid.to_string().into(),
+                                None,
+                            );
+                        }
 
                         log::debug!(
                             "created and joined thread, stored message_id: {}, channel_id: {}",
@@ -322,7 +324,12 @@ impl App {
 
         match res {
             Ok(msg) => {
-                log::debug!("Sended message {} to {}", content, channel_id);
+                log::debug!(
+                    "Sended message {} to {}, message_id: {}",
+                    content,
+                    channel_id,
+                    msg.id
+                );
                 msg.id.0
             }
             Err(e) => {
@@ -380,11 +387,14 @@ impl App {
         }
     }
 
-    async fn join_thread(&self, channel_id: u64) {
+    async fn join_thread(&self, channel_id: u64) -> bool {
         let res = self.discord.join_thread_channel(channel_id).await;
 
         if let Err(e) = res {
             log::warn!("failed to join thread: {}", e);
+            false
+        } else {
+            true
         }
     }
 
