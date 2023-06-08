@@ -22,7 +22,9 @@ struct App {
 pub async fn run() {
     logger::init();
 
-    let login = env::var("login").unwrap_or("jetjinser".to_string());
+    let login = env::var("login")
+        .map(GithubLogin::Provided)
+        .unwrap_or(GithubLogin::Default);
     let owner = env::var("owner").unwrap_or("jetjinser".to_string());
     let repo = env::var("repo").unwrap_or("fot".to_string());
 
@@ -37,7 +39,6 @@ pub async fn run() {
         .filter(|s| !s.is_empty())
         .collect();
     let events = vec!["issues", "issue_comment"];
-    let gh_login = GithubLogin::Provided(login);
 
     let discord = HttpBuilder::new(token).build();
 
@@ -49,7 +50,7 @@ pub async fn run() {
 
     log::info!("Running flow");
 
-    listen_to_event(&gh_login, &owner, &repo, events, |payload| {
+    listen_to_event(&login, &owner, &repo, events, |payload| {
         handle(payload, state)
     })
     .await;
