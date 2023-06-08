@@ -262,7 +262,7 @@ impl App {
         match res {
             Ok(gc) => {
                 log::debug!("Started thread: {}({})", gc.name, gc.id);
-                Some(gc.id.0)
+                Some(gc.guild_id.0)
             }
             Err(e) => {
                 log::warn!("failed to creat public thread: {}", e);
@@ -323,6 +323,7 @@ impl App {
                 } else {
                     log::warn!("failed to get channel_id");
                 }
+
                 log::debug!("comment Created action done");
             }
             IssueCommentEventAction::Deleted => {
