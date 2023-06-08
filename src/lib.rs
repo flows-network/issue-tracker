@@ -181,11 +181,11 @@ impl App {
                         let cid = self.start_thread(mid, title).await.unwrap();
 
                         if self.join_thread(cid).await {
-                            let Some(body) = iep.issue.body else {
-                                log::warn!("issue `{}` has no body", iep.issue.title);
-                                return;
-                            };
-                            self.send_msg(cid, body).await;
+                            if let Some(body) = iep.issue.body {
+                                self.send_msg(cid, body).await;
+                            } else {
+                                log::debug!("issue `{}` has no body", iep.issue.title);
+                            }
                         }
 
                         {
