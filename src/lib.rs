@@ -79,28 +79,28 @@ impl App {
 
         if labeled_in_x != 0 {
             match iep.action {
-                IssuesEventAction::Opened => {
-                    let Some(content) = iep.issue.body else {
-                        log::warn!("issue `{}` has no body", iep.issue.title);
-                        return;
-                    };
-                    let mid = self.send_msg(self.channel_id, content).await.unwrap();
-
-                    store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
-
-                    let title = format!("{}#{}", iep.issue.title, iep.issue.number);
-                    let cid = self.start_thread(mid, title).await.unwrap();
-
-                    store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
-
-                    self.join_thread(cid).await;
-
-                    log::debug!(
-                        "Opened action done, stored message_id: {}, channel_id: {}",
-                        mid,
-                        cid
-                    );
-                }
+                // IssuesEventAction::Opened => {
+                //     let Some(content) = iep.issue.body else {
+                //         log::warn!("issue `{}` has no body", iep.issue.title);
+                //         return;
+                //     };
+                //     let mid = self.send_msg(self.channel_id, content).await.unwrap();
+                //
+                //     store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
+                //
+                //     let title = format!("{}#{}", iep.issue.title, iep.issue.number);
+                //     let cid = self.start_thread(mid, title).await.unwrap();
+                //
+                //     store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
+                //
+                //     self.join_thread(cid).await;
+                //
+                //     log::debug!(
+                //         "Opened action done, stored message_id: {}, channel_id: {}",
+                //         mid,
+                //         cid
+                //     );
+                // }
                 IssuesEventAction::Closed => {
                     let thread_channel_id = store::get(&format!("{}:channel", iep.issue.id));
                     if let Some(cid) = thread_channel_id {
