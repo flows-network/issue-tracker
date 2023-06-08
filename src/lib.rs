@@ -93,6 +93,8 @@ impl App {
 
                     store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
 
+                    self.join_thread(cid).await;
+
                     log::debug!(
                         "Opened action done, stored message_id: {}, channel_id: {}",
                         mid,
@@ -174,11 +176,30 @@ impl App {
 
                         let label = iep.label.unwrap().name;
                         self.send_msg(cid, format!("Labeled: {}", label)).await;
-                    } else {
-                        log::warn!("failed to get channel_id");
-                    }
 
-                    log::debug!("Labeled action done");
+                        log::debug!("Labeled action done");
+                    } else {
+                        let Some(content) = iep.issue.body else {
+                            log::warn!("issue `{}` has no body", iep.issue.title);
+                            return;
+                        };
+                        let mid = self.send_msg(self.channel_id, content).await.unwrap();
+
+                        store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
+
+                        let title = format!("{}#{}", iep.issue.title, iep.issue.number);
+                        let cid = self.start_thread(mid, title).await.unwrap();
+
+                        store::set(&format!("{}:channel", iep.issue.id), cid.into(), None);
+
+                        self.join_thread(cid).await;
+
+                        log::debug!(
+                            "created and joined thread, stored message_id: {}, channel_id: {}",
+                            mid,
+                            cid
+                        );
+                    }
                 }
                 IssuesEventAction::Unlabeled => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -241,7 +262,7 @@ impl App {
         match res {
             Ok(gc) => {
                 log::debug!("Started thread: {}({})", gc.name, gc.id);
-                Some(gc.guild_id.0)
+                Some(gc.id.0)
             }
             Err(e) => {
                 log::warn!("failed to creat public thread: {}", e);
@@ -275,6 +296,14 @@ impl App {
 
         if let Err(e) = res {
             log::warn!("failed to edit message: {}", e);
+        }
+    }
+
+    async fn join_thread(&self, channel_id: u64) {
+        let res = self.discord.join_thread_channel(channel_id).await;
+
+        if let Err(e) = res {
+            log::warn!("failed to join thread: {}", e);
         }
     }
 }
