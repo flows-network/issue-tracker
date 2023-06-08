@@ -252,7 +252,7 @@ impl App {
                     let body = comment.body.unwrap_or("...".to_string());
                     let url = comment.html_url;
 
-                    let content = format!("{author}:\n{body}\n\n> {url}");
+                    let content = format!("**{author}** added a *comment*:\n{body}\n\n> {url}");
 
                     let mid = self.send_msg(cid, content).await;
 
