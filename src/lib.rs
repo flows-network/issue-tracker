@@ -183,7 +183,7 @@ impl App {
                             log::warn!("issue `{}` has no body", iep.issue.title);
                             return;
                         };
-                        let mid = self.send_msg(self.channel_id, content).await.unwrap();
+                        let mid = self.send_msg(self.channel_id, content).await;
 
                         store::set(&format!("{}:message", iep.issue.id), mid.into(), None);
 
@@ -228,7 +228,7 @@ impl App {
         }
     }
 
-    async fn send_msg(&self, channel_id: u64, content: String) -> Option<u64> {
+    async fn send_msg(&self, channel_id: u64, content: String) -> u64 {
         let res = self
             .discord
             .send_message(
@@ -242,11 +242,11 @@ impl App {
         match res {
             Ok(msg) => {
                 log::debug!("Sended message {} to {}", content, channel_id);
-                Some(msg.id.0)
+                msg.id.0
             }
             Err(e) => {
-                log::warn!("failed to send message: {}", e);
-                None
+                log::warn!("failed to send message {} to {}", e, channel_id);
+                panic!()
             }
         }
     }
@@ -262,7 +262,7 @@ impl App {
         match res {
             Ok(gc) => {
                 log::debug!("Started thread: {}({})", gc.name, gc.id);
-                Some(gc.guild_id.0)
+                Some(gc.id.0)
             }
             Err(e) => {
                 log::warn!("failed to creat public thread: {}", e);
@@ -319,7 +319,11 @@ impl App {
 
                     let title = icep.comment.body.unwrap_or("...".to_string());
 
-                    self.send_msg(cid, title).await;
+                    let mid = self.send_msg(cid, title).await;
+
+                    store::set(&format!("{}:cmt_msg", icep.comment.id), mid.into(), None);
+
+                    log::debug!("stored comment_message_id: {}", mid);
                 } else {
                     log::warn!("failed to get channel_id");
                 }
@@ -329,22 +333,23 @@ impl App {
             IssueCommentEventAction::Deleted => {
                 let issue_id = icep.issue.id;
                 let channel_id = store::get(&format!("{}:channel", issue_id));
-                let message_id = store::get(&format!("{}:message", issue_id));
-                if let (Some(cid), Some(mid)) = (channel_id, message_id) {
+                let cmt_msg_id = store::get(&format!("{}:cmt_msg", issue_id));
+                if let (Some(cid), Some(mid)) = (channel_id, cmt_msg_id) {
                     let cid = cid.as_u64().unwrap();
                     let mid = mid.as_u64().unwrap();
 
                     self.del_msg(cid, mid).await;
                 } else {
-                    log::warn!("failed to get channel_id and message_id");
+                    log::warn!("failed to get channel_id or comment_message_id");
                 }
+
                 log::debug!("comment Deleted action done");
             }
             IssueCommentEventAction::Edited => {
                 let issue_id = icep.issue.id;
                 let channel_id = store::get(&format!("{}:channel", issue_id));
-                let message_id = store::get(&format!("{}:message", issue_id));
-                if let (Some(cid), Some(mid)) = (channel_id, message_id) {
+                let cmt_msg_id = store::get(&format!("{}:cmt_msg", issue_id));
+                if let (Some(cid), Some(mid)) = (channel_id, cmt_msg_id) {
                     let cid = cid.as_u64().unwrap();
                     let mid = mid.as_u64().unwrap();
 
@@ -352,8 +357,9 @@ impl App {
 
                     self.edit_msg(cid, mid, body).await;
                 } else {
-                    log::warn!("failed to get channel_id and message_id");
+                    log::warn!("failed to get channel_id");
                 }
+
                 log::debug!("comment Edited action done");
             }
             action => {
