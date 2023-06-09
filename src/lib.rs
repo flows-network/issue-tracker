@@ -25,11 +25,11 @@ pub async fn run() {
     let login = env::var("login")
         .map(GithubLogin::Provided)
         .unwrap_or(GithubLogin::Default);
-    let owner = env::var("owner").unwrap_or("jetjinser".to_string());
-    let repo = env::var("repo").unwrap_or("fot".to_string());
+    let owner = env::var("github_owner").unwrap_or("jetjinser".to_string());
+    let repo = env::var("github_repo").unwrap_or("fot".to_string());
 
     let token = env::var("discord_token").unwrap();
-    let channel_id = env::var("channel_id").unwrap().parse().unwrap();
+    let channel_id = env::var("discord_channel_id").unwrap().parse().unwrap();
 
     let labels = env::var("labels").unwrap();
 
