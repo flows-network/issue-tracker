@@ -42,13 +42,13 @@ pub async fn run() {
 
     let discord = HttpBuilder::new(token).build();
 
+    log::info!("Running flow with x_labels: {:?}", &x_labels);
+
     let state = App {
         discord,
         x_labels,
         channel_id,
     };
-
-    log::info!("Running flow");
 
     listen_to_event(&login, &owner, &repo, events, |payload| {
         handle(payload, state)
@@ -78,6 +78,7 @@ impl App {
             log::debug!("issue `{}` has no label", iep.issue.title);
             return;
         }
+        log::debug!("issue `{}` labels: {:?}", iep.issue.title, labels);
 
         let labels = HashSet::from_iter(labels.iter().map(|lb| lb.name.clone()));
         let labelled_in_x = labels.intersection(&self.x_labels);
@@ -88,6 +89,7 @@ impl App {
             .map(|label| format!("`{}`", label))
             .collect::<Vec<String>>()
             .join(", ");
+        log::debug!("labelled_msg: {}", &labelled_msg);
 
         if !labelled.is_empty() {
             match iep.action {
@@ -115,6 +117,8 @@ impl App {
 
                         self.edit_thread(title, cid).await;
                     }
+
+                    log::debug!("Reopened action done");
                 }
                 IssuesEventAction::Edited => {
                     let issue_id = iep.issue.id;
@@ -142,6 +146,8 @@ impl App {
                         let assignee = iep.assignee.unwrap().login;
                         self.send_msg(cid, format!("Assigned: {}", assignee)).await;
                     }
+
+                    log::debug!("Assigned action done");
                 }
                 IssuesEventAction::Unassigned => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
@@ -208,6 +214,7 @@ impl App {
                             cid
                         );
                     }
+                    log::debug!("Labeled action done");
                 }
                 IssuesEventAction::Unlabeled => {
                     let channel_id = store::get(&format!("{}:channel", iep.issue.id));
