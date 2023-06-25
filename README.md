@@ -1,6 +1,4 @@
-# GitHub Issue Tracker
-
-# <p align="center">ChatGPT/4 code reviewer for Github PR</p>
+# <p align="center">GitHub Issue Tracker</p>
 
 <p align="center">
   <a href="https://discord.gg/ccZn9ZMfFf">
@@ -14,14 +12,14 @@
   </a>
 </p>
 
-[Deploy this function on flows.network](#deploy-your-own-code-review-bot-in-3-simple-steps), and you will get a Discord 🤖 to sync with the GitHub issues with specified labels. It helps DevRel and maintainers of open-source projects to interact with the community automatically! For example, we can build a bot to send the GitHub issue with `good first issue` to the `contributor` channel on Discord based on this template.
+[Deploy this function on flows.network](#deploy-your-own-github-issue-tracker-bot-in-3-simple-steps), and you will get a Discord 🤖 to sync with the GitHub issues with specified labels. Label helps the open-source projects manage the GitHub issues. This bot can help DevRel and maintainers of open-source projects to interact with the community based on different labels automatically! For example, we can build a bot to send the GitHub issue with `good first issue` to the `contributor` channel on Discord based on this template.
 
 <img width="800" alt="image" src="https://github.com/flows-network/issue-tracker/assets/45785633/2ebfc405-c99a-4703-95d9-13871c65b250">
 
 The issues will appear as separate threads, and any updates made to the issue on GitHub, such as adding a new label or comment, will be synchronized with the corresponding thread on Discord.
 
 
-## Deploy your own github issue tracker bot in 3 simple steps
+## Deploy your own GitHub issue tracker bot in 3 simple steps
 
 1. Create a bot from a template
 2. Configure the bot on a Discord channel
@@ -70,6 +68,6 @@ Close the tab and go back to the flow.network page once you are done. Click on *
 
 ### Wait for the magic!
 
-This is it! You are now on the flow details page waiting for the flow function to build. As soon as the flow's status became `running`, the bot is ready to track the GitHub issues! The bot is triggered by a GitHub issue is labeled with specified labels.
+This is it! You are now on the flow details page waiting for the flow function to build. As soon as the flow's status became `running`, the bot is ready to track the GitHub issues! The bot is triggered by a GitHub issue labeled with specified labels.
 
 
